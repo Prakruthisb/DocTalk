@@ -1,6 +1,6 @@
 from langchain_groq import ChatGroq
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
 import os
 
 def build_rag_chain(retriever):
@@ -10,29 +10,22 @@ def build_rag_chain(retriever):
         temperature=0.2
     )
 
-    prompt = PromptTemplate(
-        input_variables=["context", "question"],
-        template="""You are a helpful assistant. 
-        Answer the question using ONLY the context below.
-        If the answer is not in the context, say "I could not find this in the document."
-
-        Context:
-        {context}
-
-        Question: {question}
-
-        Answer:"""
+    # Memory stores chat history inside the chain itself
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True,
+        output_key="answer"
     )
 
-    chain = RetrievalQA.from_chain_type(
+    chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
-        chain_type="stuff",
-        chain_type_kwargs={"prompt": prompt},
-        return_source_documents=True
+        memory=memory,
+        return_source_documents=True,
+        output_key="answer"
     )
     return chain
 
 def ask(chain, question):
-    result = chain.invoke({"query": question})
-    return result["result"], result["source_documents"]
+    result = chain.invoke({"question": question})
+    return result["answer"], result["source_documents"]
