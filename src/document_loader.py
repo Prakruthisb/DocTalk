@@ -1,14 +1,23 @@
-from langchain_community.document_loaders import PyMuPDFLoader
+import os
+from langchain_community.document_loaders import PyMuPDFLoader, TextLoader, Docx2txtLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-def load_and_chunk(pdf_path):
-    # Load PDF — each page becomes a Document object
-    loader = PyMuPDFLoader(pdf_path)
+def get_loader(file_path):
+    ext = os.path.splitext(file_path)[-1].lower()
+    
+    if ext == ".pdf":
+        return PyMuPDFLoader(file_path)
+    elif ext == ".txt":
+        return TextLoader(file_path, encoding="utf-8")
+    elif ext == ".docx":
+        return Docx2txtLoader(file_path)
+    else:
+        raise ValueError(f"Unsupported file type: {ext}")
+
+def load_and_chunk(file_path):
+    loader = get_loader(file_path)
     documents = loader.load()
 
-    # Split into overlapping chunks
-    # chunk_size: how many characters per chunk
-    # chunk_overlap: overlap between chunks so context isn't lost
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
         chunk_overlap=50

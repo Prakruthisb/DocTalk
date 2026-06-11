@@ -7,6 +7,7 @@ from src.vector_store import build_vector_store, get_retriever
 from src.rag_chain import build_rag_chain, ask
 from src.multilingual import detect_and_translate_to_english, translate_answer
 import tempfile
+import os
 
 st.set_page_config(page_title="DocTalk", layout="centered")
 st.title("DocTalk — Chat with any document in your language")
@@ -22,20 +23,38 @@ if "doc_loaded" not in st.session_state:
     st.session_state.doc_loaded = False
 
 # ── 2. File upload ───────────────────────────────────────────
-uploaded = st.file_uploader("Upload a PDF", type=["pdf"])
+uploaded = st.file_uploader("Upload a document", type=["pdf", "txt", "docx"])
 
 if uploaded and not st.session_state.doc_loaded:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as f:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded.name)[-1]) as f:
         f.write(uploaded.read())
         tmp_path = f.name
 
-    with st.spinner("Processing document..."):
-        chunks = load_and_chunk(tmp_path)
-        vs = build_vector_store(chunks)
-        retriever = get_retriever(vs)
-        st.session_state.chain = build_rag_chain(retriever)
-        st.session_state.doc_loaded = True
-    st.success(f"Ready — {len(chunks)} chunks indexed")
+    # Replace your single spinner with this step-by-step progress block
+    progress = st.empty()      # placeholder for status messages
+    bar = st.progress(0)       # progress bar
+
+    progress.status("📄 Reading document...")
+    bar.progress(10)
+    chunks = load_and_chunk(tmp_path)
+
+    progress.status(f"✂️ Chunking complete — {len(chunks)} chunks created")
+    bar.progress(40)
+
+    progress.status("🧠 Generating embeddings...")
+    bar.progress(60)
+    vs = build_vector_store(chunks)
+    retriever = get_retriever(vs)
+
+    progress.status("⚙️ Building RAG chain...")
+    bar.progress(85)
+    st.session_state.chain = build_rag_chain(retriever)
+    st.session_state.doc_loaded = True
+
+    bar.progress(100)
+    progress.empty()    # remove the status message
+    bar.empty()         # remove the progress bar
+    st.success(f"✅ Ready — {len(chunks)} chunks indexed from {uploaded.name}")
 
 # ── 3. Render existing chat history ─────────────────────────
 for msg in st.session_state.messages:
@@ -72,8 +91,18 @@ if st.session_state.doc_loaded:
                         unique_sources.append(doc)
 
                 # Clean page label
-                page_labels = [f"Page {p + 1}" for p in seen_pages]  # +1 because pages are 0-indexed
-                st.caption(f"📄 Answer found on: {', '.join(page_labels)}")
+                pages = sorted({
+                    doc.metadata.get("page")
+                    for doc in sources
+                    if isinstance(doc.metadata.get("page"), int)
+                })
+
+                if pages:
+                    st.caption(
+                        f"📄 Answer found on: {', '.join(f'Page {p+1}' for p in pages)}"
+                    )
+                else:
+                    st.caption("📄 Source document has no page information")
 
                 with st.expander("View source excerpts"):
                     for doc in unique_sources:
