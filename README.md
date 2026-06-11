@@ -8,6 +8,8 @@ Ask questions about any document in **8 Indian languages** — get answers in th
 
 🔗 [https://prakruthisb-doctalk.hf.space]
 
+![DocTalk Demo](D:/doctalk/demo.gif)
+
 ---
 
 ## 📌 Overview
@@ -169,10 +171,6 @@ docker run -p 8501:8501 \
 ```
 
 ---
-
-```markdown
-![DocTalk Demo](demo.gif)
-```
 
 ---
 
