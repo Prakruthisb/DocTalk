@@ -6,7 +6,7 @@ Ask questions about any document in **8 Indian languages** — get answers in th
 
 ## 🌐 Live Demo
 
-🔗 [your-huggingface-space-url] *(update after deployment)*
+🔗 [https://prakruthisb-doctalk.hf.space]
 
 ---
 
