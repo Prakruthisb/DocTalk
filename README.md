@@ -139,7 +139,7 @@ doctalk/
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/doctalk.git
+git clone https://github.com/Prakruthisb/DocTalk
 cd doctalk
 
 # Install dependencies
